@@ -23,11 +23,7 @@ import io.ballerina.graphql.cmd.generator.GenerationContext;
 import io.ballerina.graphql.cmd.generator.GenerationEngine;
 import io.ballerina.graphql.cmd.generator.OperationMode;
 import io.ballerina.graphql.exception.CmdException;
-import io.ballerina.graphql.exception.ParseException;
-import io.ballerina.graphql.exception.ValidationException;
-import io.ballerina.graphql.generator.client.exception.ClientCodeGenerationException;
-import io.ballerina.graphql.generator.service.exception.ServiceGenerationException;
-import io.ballerina.graphql.schema.exception.SchemaFileGenerationException;
+import io.ballerina.graphql.exception.GenerationException;
 import picocli.CommandLine;
 
 import java.io.BufferedReader;
@@ -150,8 +146,7 @@ public class GraphqlCmd implements BLauncherCmd {
             }
             validateInputFlags();
             executeOperation();
-        } catch (CmdException | ParseException | ValidationException | ClientCodeGenerationException | IOException |
-                 SchemaFileGenerationException | ServiceGenerationException e) {
+        } catch (CmdException | GenerationException e) {
             outStream.println(e.getMessage());
             exit(EXIT_CODE_1);
             return;
@@ -196,18 +191,13 @@ public class GraphqlCmd implements BLauncherCmd {
     /**
      * Execute the correct operation according to the given inputs.
      *
-     * @throws CmdException                  when a graphql command related error occurs
-     * @throws ParseException                when a parsing related error occurs
-     * @throws IOException                   If an I/O error occurs
-     * @throws ClientCodeGenerationException when a graphql client generation related error occurs
-     * @throws ValidationException           when validation related error occurs
-     * @throws SchemaFileGenerationException when a SDL schema generation related error occurs
+     * @throws CmdException        when a graphql command related error occurs
+     * @throws GenerationException when a graphql generation related error occurs
      */
-    private void executeOperation()
-            throws CmdException, ParseException, IOException, ValidationException, ClientCodeGenerationException,
-            SchemaFileGenerationException, ServiceGenerationException {
-        GenerationContext context = new GenerationContext(
-                OperationMode.fromInputPath(inputPath).orElse(null), inputPath, getTargetOutputPath(),
+    private void executeOperation() throws CmdException, GenerationException {
+        OperationMode operationMode = OperationMode.fromInputPath(inputPath).orElseThrow(
+                () -> new CmdException(String.format(MESSAGE_FOR_INVALID_FILE_EXTENSION, inputPath)));
+        GenerationContext context = new GenerationContext(operationMode, inputPath, getTargetOutputPath(),
                 serviceBasePath, useRecordsForObjectsFlag, outStream);
         GenerationEngine.run(context);
     }

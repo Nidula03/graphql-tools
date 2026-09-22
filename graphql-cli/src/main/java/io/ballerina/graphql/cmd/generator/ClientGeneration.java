@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2025, WSO2 LLC. (http://www.wso2.org) All Rights Reserved.
+ *  Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com) All Rights Reserved.
  *
  *  WSO2 LLC. licenses this file to you under the Apache License,
  *  Version 2.0 (the "License"); you may not use this file except
@@ -21,6 +21,7 @@ package io.ballerina.graphql.cmd.generator;
 import io.ballerina.graphql.cmd.Utils;
 import io.ballerina.graphql.cmd.pojo.Config;
 import io.ballerina.graphql.cmd.pojo.Project;
+import io.ballerina.graphql.exception.GenerationException;
 import io.ballerina.graphql.exception.ParseException;
 import io.ballerina.graphql.exception.ValidationException;
 import io.ballerina.graphql.generator.client.GraphqlClientProject;
@@ -66,38 +67,45 @@ public class ClientGeneration implements Generator {
     }
 
     @Override
-    public void validate() throws ParseException, IOException, ValidationException {
-        Config config = readConfig(context.getInputPath());
-        ConfigValidator.getInstance().validate(config);
-        this.projects = populateProjects(config);
-        for (GraphqlClientProject project : this.projects) {
-            Utils.validateGraphqlProject(project);
-            QueryValidator.getInstance().validate(project);
+    public void validate() throws GenerationException {
+        try {
+            Config config = readConfig(context.getInputPath());
+            ConfigValidator.getInstance().validate(config);
+            this.projects = populateProjects(config);
+            for (GraphqlClientProject project : this.projects) {
+                Utils.validateGraphqlProject(project);
+                QueryValidator.getInstance().validate(project);
+            }
+        } catch (ParseException | IOException | ValidationException e) {
+            throw new GenerationException(e);
         }
     }
 
     @Override
-    public void generate() throws ClientCodeGenerationException {
+    public void generate() throws GenerationException {
         for (GraphqlClientProject project : this.projects) {
             try {
                 this.generatedSources.put(project,
                         this.clientCodeGenerator.generateBalSources(project, GeneratorContext.CLI));
+            } catch (ClientCodeGenerationException e) {
+                throw new GenerationException(e);
             } catch (NullPointerException e) {
-                throw new ClientCodeGenerationException("The provided schema includes operations that are not "
-                        + "supported by the client generation.", project.getName());
+                throw new GenerationException(new ClientCodeGenerationException(
+                        "The provided schema includes operations that are not "
+                                + "supported by the client generation.", project.getName()));
             }
         }
     }
 
     @Override
-    public void write() throws ClientCodeGenerationException {
+    public void write() throws GenerationException {
         for (Map.Entry<GraphqlClientProject, List<SrcFilePojo>> entry : this.generatedSources.entrySet()) {
             GraphqlClientProject project = entry.getKey();
             try {
                 this.clientCodeGenerator.writeGeneratedSources(entry.getValue(),
                         Path.of(project.getOutputPath()));
             } catch (IOException e) {
-                throw new ClientCodeGenerationException(e.getMessage(), project.getName());
+                throw new GenerationException(new ClientCodeGenerationException(e.getMessage(), project.getName()));
             }
         }
     }

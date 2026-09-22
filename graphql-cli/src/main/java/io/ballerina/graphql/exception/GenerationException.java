@@ -16,18 +16,22 @@
  *  under the License.
  */
 
-package io.ballerina.graphql.cmd.generator;
-
-import io.ballerina.graphql.exception.GenerationException;
+package io.ballerina.graphql.exception;
 
 /**
- * Represents a single GraphQL generation operation.
+ * Exception type definition for GraphQL generation related errors.
  */
-public interface Generator {
+public class GenerationException extends Exception {
 
-    void validate() throws GenerationException;
+    public GenerationException(String message) {
+        super(message);
+    }
 
-    void generate() throws GenerationException;
+    public GenerationException(Throwable cause) {
+        super(cause.getMessage(), cause);
+    }
 
-    void write() throws GenerationException;
+    public GenerationException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }

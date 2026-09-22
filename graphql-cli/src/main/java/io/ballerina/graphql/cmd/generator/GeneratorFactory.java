@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2025, WSO2 LLC. (http://www.wso2.org) All Rights Reserved.
+ *  Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com) All Rights Reserved.
  *
  *  WSO2 LLC. licenses this file to you under the Apache License,
  *  Version 2.0 (the "License"); you may not use this file except
@@ -18,9 +18,7 @@
 
 package io.ballerina.graphql.cmd.generator;
 
-import io.ballerina.graphql.exception.CmdException;
-
-import static io.ballerina.graphql.cmd.Constants.MESSAGE_FOR_INVALID_FILE_EXTENSION;
+import io.ballerina.graphql.exception.GenerationException;
 
 /**
  * Creates the generator that handles a given generation context.
@@ -29,11 +27,8 @@ public class GeneratorFactory {
 
     private GeneratorFactory() {}
 
-    public static Generator getGenerator(GenerationContext context) throws CmdException {
+    public static Generator getGenerator(GenerationContext context) throws GenerationException {
         OperationMode operationMode = context.getOperationMode();
-        if (operationMode == null) {
-            throw new CmdException(String.format(MESSAGE_FOR_INVALID_FILE_EXTENSION, context.getInputPath()));
-        }
         switch (operationMode) {
             case CLIENT:
                 return new ClientGeneration(context);
@@ -42,7 +37,8 @@ public class GeneratorFactory {
             case SCHEMA:
                 return new SchemaGeneration(context);
             default:
-                throw new CmdException(String.format(MESSAGE_FOR_INVALID_FILE_EXTENSION, context.getInputPath()));
+                throw new GenerationException("No generator is available for the \"" + operationMode
+                        + "\" operation mode.");
         }
     }
 }

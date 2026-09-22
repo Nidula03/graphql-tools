@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2025, WSO2 LLC. (http://www.wso2.org) All Rights Reserved.
+ *  Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com) All Rights Reserved.
  *
  *  WSO2 LLC. licenses this file to you under the Apache License,
  *  Version 2.0 (the "License"); you may not use this file except
@@ -18,14 +18,7 @@
 
 package io.ballerina.graphql.cmd.generator;
 
-import io.ballerina.graphql.exception.CmdException;
-import io.ballerina.graphql.exception.ParseException;
-import io.ballerina.graphql.exception.ValidationException;
-import io.ballerina.graphql.generator.client.exception.ClientCodeGenerationException;
-import io.ballerina.graphql.generator.service.exception.ServiceGenerationException;
-import io.ballerina.graphql.schema.exception.SchemaFileGenerationException;
-
-import java.io.IOException;
+import io.ballerina.graphql.exception.GenerationException;
 
 /**
  * Runs a GraphQL generation operation.
@@ -34,15 +27,8 @@ public class GenerationEngine {
 
     private GenerationEngine() {}
 
-    public static void run(GenerationContext context)
-            throws CmdException, ParseException, IOException, ValidationException, ClientCodeGenerationException,
-            SchemaFileGenerationException, ServiceGenerationException {
-        run(GeneratorFactory.getGenerator(context));
-    }
-
-    public static void run(Generator generator)
-            throws ParseException, IOException, ValidationException, ClientCodeGenerationException,
-            SchemaFileGenerationException, ServiceGenerationException {
+    public static void run(GenerationContext context) throws GenerationException {
+        Generator generator = GeneratorFactory.getGenerator(context);
         generator.validate();
         generator.generate();
         generator.write();

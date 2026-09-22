@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2025, WSO2 LLC. (http://www.wso2.org) All Rights Reserved.
+ *  Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com) All Rights Reserved.
  *
  *  WSO2 LLC. licenses this file to you under the Apache License,
  *  Version 2.0 (the "License"); you may not use this file except
@@ -20,6 +20,7 @@ package io.ballerina.graphql.cmd.generator;
 
 import io.ballerina.graphql.cmd.Constants;
 import io.ballerina.graphql.cmd.Utils;
+import io.ballerina.graphql.exception.GenerationException;
 import io.ballerina.graphql.exception.ValidationException;
 import io.ballerina.graphql.generator.service.GraphqlServiceProject;
 import io.ballerina.graphql.generator.service.diagnostic.ServiceDiagnosticMessages;
@@ -46,41 +47,48 @@ public class ServiceGeneration implements Generator {
 
     public ServiceGeneration(GenerationContext context) {
         this.context = context;
-        this.serviceCodeGenerator = new ServiceCodeGenerator();
+        this.serviceCodeGenerator = new ServiceCodeGenerator(context.isUseRecordsForObjects());
     }
 
     @Override
-    public void validate() throws IOException, ValidationException, ServiceGenerationException {
+    public void validate() throws GenerationException {
         String inputPath = context.getInputPath();
         File graphqlFile = new File(inputPath);
         if (!graphqlFile.exists()) {
-            throw new ServiceGenerationException(ServiceDiagnosticMessages.GRAPHQL_SERVICE_GEN_100, null,
-                    String.format(Constants.MESSAGE_MISSING_SCHEMA_FILE, inputPath));
+            throw new GenerationException(new ServiceGenerationException(
+                    ServiceDiagnosticMessages.GRAPHQL_SERVICE_GEN_100, null,
+                    String.format(Constants.MESSAGE_MISSING_SCHEMA_FILE, inputPath)));
         }
         if (!graphqlFile.canRead()) {
-            throw new ServiceGenerationException(ServiceDiagnosticMessages.GRAPHQL_SERVICE_GEN_100, null,
-                    String.format(Constants.MESSAGE_CAN_NOT_READ_SCHEMA_FILE, inputPath));
+            throw new GenerationException(new ServiceGenerationException(
+                    ServiceDiagnosticMessages.GRAPHQL_SERVICE_GEN_100, null,
+                    String.format(Constants.MESSAGE_CAN_NOT_READ_SCHEMA_FILE, inputPath)));
         }
         this.project = new GraphqlServiceProject(ROOT_PROJECT_NAME, inputPath,
                 context.getTargetOutputPath().toString());
-        Utils.validateGraphqlProject(this.project);
-    }
-
-    @Override
-    public void generate() throws ServiceGenerationException {
-        if (context.isUseRecordsForObjects()) {
-            this.serviceCodeGenerator.enableToUseRecords();
+        try {
+            Utils.validateGraphqlProject(this.project);
+        } catch (IOException | ValidationException e) {
+            throw new GenerationException(e);
         }
-        this.sources = this.serviceCodeGenerator.generateBalSources(this.project);
     }
 
     @Override
-    public void write() throws ServiceGenerationException {
+    public void generate() throws GenerationException {
+        try {
+            this.sources = this.serviceCodeGenerator.generateBalSources(this.project);
+        } catch (ServiceGenerationException e) {
+            throw new GenerationException(e);
+        }
+    }
+
+    @Override
+    public void write() throws GenerationException {
         try {
             this.serviceCodeGenerator.writeGeneratedSources(this.sources, Path.of(this.project.getOutputPath()));
         } catch (IOException e) {
-            throw new ServiceGenerationException(ServiceDiagnosticMessages.GRAPHQL_SERVICE_GEN_100, null,
-                    e.getMessage());
+            throw new GenerationException(new ServiceGenerationException(
+                    ServiceDiagnosticMessages.GRAPHQL_SERVICE_GEN_100, null, e.getMessage()));
         }
     }
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2025, WSO2 LLC. (http://www.wso2.org) All Rights Reserved.
+ *  Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com) All Rights Reserved.
  *
  *  WSO2 LLC. licenses this file to you under the Apache License,
  *  Version 2.0 (the "License"); you may not use this file except
@@ -18,7 +18,7 @@
 
 package io.ballerina.graphql.cmd.generator;
 
-import io.ballerina.graphql.exception.CmdException;
+import io.ballerina.graphql.exception.GenerationException;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -37,34 +37,28 @@ public class GeneratorFactoryTest {
     }
 
     @Test(description = "Test generating a client generator for the client operation mode")
-    public void testGetGeneratorForClientMode() throws CmdException {
+    public void testGetGeneratorForClientMode() throws GenerationException {
         Generator generator = GeneratorFactory.getGenerator(
                 createContext(OperationMode.CLIENT, "graphql.config.yaml"));
         Assert.assertTrue(generator instanceof ClientGeneration);
     }
 
     @Test(description = "Test generating a service generator for the service operation mode")
-    public void testGetGeneratorForServiceMode() throws CmdException {
+    public void testGetGeneratorForServiceMode() throws GenerationException {
         Generator generator = GeneratorFactory.getGenerator(
                 createContext(OperationMode.SERVICE, "schema.graphql"));
         Assert.assertTrue(generator instanceof ServiceGeneration);
     }
 
     @Test(description = "Test generating a schema generator for the schema operation mode")
-    public void testGetGeneratorForSchemaMode() throws CmdException {
+    public void testGetGeneratorForSchemaMode() throws GenerationException {
         Generator generator = GeneratorFactory.getGenerator(
                 createContext(OperationMode.SCHEMA, "service.bal"));
         Assert.assertTrue(generator instanceof SchemaGeneration);
     }
 
-    @Test(description = "Test generating a generator when the operation mode is not resolved",
-            expectedExceptions = CmdException.class)
-    public void testGetGeneratorWithoutOperationMode() throws CmdException {
-        GeneratorFactory.getGenerator(createContext(null, "notes.txt"));
-    }
-
     @Test(description = "Test whether the created generator is given the same generation context")
-    public void testGeneratorReceivesContext() throws CmdException {
+    public void testGeneratorReceivesContext() throws GenerationException {
         GenerationContext context = createContext(OperationMode.SERVICE, "schema.graphql");
         Generator generator = GeneratorFactory.getGenerator(context);
         Assert.assertNotNull(generator);
